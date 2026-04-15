@@ -398,6 +398,30 @@
       opacity: 0.4;
     }
 
+    /* ─── Video placeholder ─────────────────────────────────────── */
+    .video-placeholder {
+      width: 100%;
+      max-width: 800px;
+      aspect-ratio: 16/9;
+      border-radius: 6px;
+      border: 1px solid rgba(240, 237, 230, 0.1);
+      background: rgba(240, 237, 230, 0.04);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      color: rgba(240, 237, 230, 0.25);
+      font-family: 'Arial', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .video-placeholder svg {
+      opacity: 0.4;
+    }
+
     /* ─── Quote ─────────────────────────────────────────────────── */
     .quote {
       font-size: clamp(1.25rem, 2.5vw, 2rem);
@@ -610,14 +634,14 @@
                 <span class="step-num">1</span>
                 <div class="step-text">
                   <strong>Unity Web Viewer <span style="color:rgba(240,237,230,0.35);font-weight:400;">(no longer available)</span></strong>
-                  <p>Orbit-based browser viewer with video annotations. Suffered from long initial load times and slow annotation video loading, creating significant friction before any content could be explored.</p>
+                  <p>Browser viewer with video annotations. Suffered from long initial load times and slow annotation video loading, creating significant friction before any content could be explored.</p>
                 </div>
               </li>
               <li>
                 <span class="step-num">2</span>
                 <div class="step-text">
                   <strong>Three.js Website &nbsp;<a href="https://swayambhu-three-js-aaryan2.apps.cloudapps.unc.edu/" target="_blank" rel="noopener" style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:#c9a96e;font-family:'Arial',sans-serif;text-decoration:none;border-bottom:1px solid rgba(201,169,110,0.4);">Visit ↗</a></strong>
-                  <p>Strong mobile support made the site broadly accessible. However, model quality and performance were poor, and annotations were never implemented, leaving the model without its intended educational component.</p>
+                  <p>Strong mobile support made the site broadly accessible despite similarly long loading times. However, model quality and performance were poor, and annotations were never implemented, leaving the model without its intended educational component.</p>
                 </div>
               </li>
             </ul>
@@ -679,7 +703,7 @@
       <div class="slide slide--dev-3" data-section="Challenges">
         <div class="slide__content slide__content--challenges">
           <div class="challenges-left">
-            <span class="overline">Obstacles</span>
+            <span class="overline">Methodology</span>
             <h2>Challenges</h2>
             <div class="divider"></div>
             <ul class="step-list">
@@ -749,19 +773,13 @@
 
       <!-- ══ 5 · RESULTS — 2 ════════════════════════════════════ -->
       <div class="slide slide--results-2" data-section="Results">
-        <div class="slide__content slide__content--split">
-          <div>
-            <span class="overline">The Experience</span>
-            <h3>Navigating<br>the application</h3>
-            <div class="divider"></div>
-            <p>The player approaches a point of interest. An info card pops up with a title and short description. Pressing <strong style="color:#c9a96e;">E</strong> opens a detail page with video or long-form text. Pressing <strong style="color:#c9a96e;">Q</strong> goes back. Walking away closes everything automatically.</p>
-            <p style="margin-top: 1rem;">The interaction is entirely keyboard-driven, preserving spatial presence throughout. No cursor, only a blur breaking the view.</p>
-          </div>
-          <div>
-            <div class="img-placeholder">
-              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              Demo / screenshot
-            </div>
+        <div class="slide__content" style="display:flex; flex-direction:column; align-items:center;">
+          <span class="overline">The Experience</span>
+          <h3>Navigating the application</h3>
+          <div class="divider"></div>
+          <div class="video-placeholder">
+            <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Video demo
           </div>
         </div>
         <div class="slide-number">07 / 08</div>
