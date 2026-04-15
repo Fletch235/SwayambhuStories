@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SwayambhuStories</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --slide-duration: 600ms;
+      --ease: cubic-bezier(0.77, 0, 0.18, 1);
+    }
+
+    html {
+      scroll-behavior: auto;
+    }
+
+    body {
+      font-family: 'Georgia', serif;
+      background: #0a0a0a;
+      color: #f0ede6;
+      overflow-x: hidden;
+    }
+
+    /* ─── Nav dots ─────────────────────────────────────────────── */
+    .nav-dots {
+      position: fixed;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      z-index: 100;
+    }
+
+    .nav-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(240, 237, 230, 0.3);
+      border: none;
+      cursor: pointer;
+      transition: background 300ms, transform 300ms;
+    }
+
+    .nav-dot.active {
+      background: #f0ede6;
+      transform: scale(1.4);
+    }
+
+    /* ─── Progress bar ─────────────────────────────────────────── */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #c9a96e, #e8d5b0);
+      width: 0%;
+      z-index: 100;
+      transition: width var(--slide-duration) var(--ease);
+    }
+
+    /* ─── Slide container ──────────────────────────────────────── */
+    .presentation {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .slide-track {
+      display: flex;
+      flex-direction: column;
+      transition: transform var(--slide-duration) var(--ease);
+      height: 100%;
+    }
+
+    .slide {
+      height: 100vh;
+      width: 100%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 6rem;
+      overflow: hidden;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ─── Slide backgrounds ────────────────────────────────────── */
+    .slide--cover    { background: #0a0a0a; }
+    .slide--motivation { background: #0d0d12; }
+    .slide--dev-1    { background: #0d120f; }
+    .slide--dev-2    { background: #0d120f; }
+    .slide--dev-3    { background: #0d120f; }
+    .slide--results-1 { background: #120d0d; }
+    .slide--results-2 { background: #120d0d; }
+    .slide--results-3 { background: #120d0d; }
+    .slide--closing  { background: #0a0a0a; }
+
+    /* Decorative background orb */
+    .slide::before {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.15;
+      pointer-events: none;
+    }
+
+    .slide--cover::before    { width: 600px; height: 600px; background: #c9a96e; top: -100px; right: -100px; }
+    .slide--motivation::before { width: 500px; height: 500px; background: #6e8fc9; bottom: -100px; left: -100px; }
+    .slide--dev-1::before, .slide--dev-2::before, .slide--dev-3::before { width: 500px; height: 500px; background: #6ec97a; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .slide--results-1::before, .slide--results-2::before, .slide--results-3::before { width: 500px; height: 500px; background: #c96e6e; bottom: -100px; right: -100px; }
+    .slide--closing::before  { width: 600px; height: 600px; background: #c9a96e; top: -100px; left: -100px; }
+
+    /* ─── Section label ────────────────────────────────────────── */
+    .section-label {
+      position: absolute;
+      top: 2.5rem;
+      left: 4rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(240, 237, 230, 0.4);
+      font-family: 'Arial', sans-serif;
+    }
+
+    .slide-number {
+      position: absolute;
+      bottom: 2.5rem;
+      right: 4rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      color: rgba(240, 237, 230, 0.3);
+      font-family: 'Arial', sans-serif;
+    }
+
+    /* ─── Content layouts ──────────────────────────────────────── */
+    .slide__content {
+      max-width: 960px;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    .slide__content--center {
+      text-align: center;
+    }
+
+    .slide__content--split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: center;
+    }
+
+    /* ─── Typography ───────────────────────────────────────────── */
+    .overline {
+      display: block;
+      font-size: 0.7rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #c9a96e;
+      font-family: 'Arial', sans-serif;
+      margin-bottom: 1.25rem;
+    }
+
+    h1 {
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: #f0ede6;
+      margin-bottom: 1.5rem;
+    }
+
+    h2 {
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      color: #f0ede6;
+      margin-bottom: 1.25rem;
+    }
+
+    h3 {
+      font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+      font-weight: 400;
+      color: #f0ede6;
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      font-size: clamp(1rem, 1.5vw, 1.2rem);
+      line-height: 1.75;
+      color: rgba(240, 237, 230, 0.75);
+      max-width: 60ch;
+    }
+
+    .lead {
+      font-size: clamp(1.1rem, 2vw, 1.4rem);
+      line-height: 1.65;
+      color: rgba(240, 237, 230, 0.8);
+    }
+
+    .highlight {
+      color: #c9a96e;
+    }
+
+    /* ─── Divider ───────────────────────────────────────────────── */
+    .divider {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, #c9a96e, transparent);
+      margin: 1.5rem 0;
+    }
+
+    .divider--center {
+      margin: 1.5rem auto;
+    }
+
+    /* ─── Approach images ───────────────────────────────────────── */
+    .approach-images {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .approach-img {
+      width: 100%;
+      max-width: 560px;
+      aspect-ratio: 16/10;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid rgba(240, 237, 230, 0.1);
+    }
+
+    /* ─── Challenges layout ─────────────────────────────────────── */
+    .slide__content--challenges {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 3.5rem;
+      align-items: center;
+      max-width: 1100px;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    .challenges-logos {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      align-items: flex-start;
+      height: 100%;
+      gap: 1.5rem;
+      padding: 1rem 0;
+    }
+
+    .challenge-logo {
+      display: flex;
+      align-items: center;
+      opacity: 0.7;
+      transition: opacity 300ms;
+    }
+
+    .challenge-logo:hover { opacity: 1; }
+
+    .challenge-logo img {
+      width: 140px;
+      height: auto;
+      max-height: 36px;
+      object-fit: contain;
+      object-position: left center;
+      filter: brightness(1);
+    }
+
+    /* ─── Screenshot grid ───────────────────────────────────────── */
+    .screenshot-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      margin-top: 2rem;
+    }
+
+    .screenshot-grid .img-placeholder {
+      aspect-ratio: 16/10;
+    }
+
+    .screenshot-img {
+      width: 100%;
+      aspect-ratio: 16/10;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid rgba(240, 237, 230, 0.1);
+    }
+
+    /* ─── Stat grid ─────────────────────────────────────────────── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      margin-top: 2.5rem;
+    }
+
+    .stat {
+      padding: 1.75rem;
+      border: 1px solid rgba(240, 237, 230, 0.1);
+      border-radius: 4px;
+      background: rgba(240, 237, 230, 0.03);
+    }
+
+    .stat__value {
+      font-size: clamp(2rem, 3.5vw, 3rem);
+      font-weight: 300;
+      color: #c9a96e;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat__label {
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(240, 237, 230, 0.5);
+      font-family: 'Arial', sans-serif;
+    }
+
+    /* ─── Step list ─────────────────────────────────────────────── */
+    .step-list {
+      list-style: none;
+      margin-top: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .step-list li {
+      display: flex;
+      gap: 1.25rem;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      flex-shrink: 0;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      border: 1px solid rgba(201, 169, 110, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      color: #c9a96e;
+      font-family: 'Arial', sans-serif;
+      margin-top: 0.1em;
+    }
+
+    .step-text strong {
+      display: block;
+      color: #f0ede6;
+      margin-bottom: 0.2rem;
+    }
+
+    .step-text p {
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    /* ─── Image placeholder ─────────────────────────────────────── */
+    .img-placeholder {
+      width: 100%;
+      aspect-ratio: 4/3;
+      border-radius: 6px;
+      border: 1px solid rgba(240, 237, 230, 0.1);
+      background: rgba(240, 237, 230, 0.04);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      color: rgba(240, 237, 230, 0.25);
+      font-family: 'Arial', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .img-placeholder svg {
+      opacity: 0.4;
+    }
+
+    /* ─── Quote ─────────────────────────────────────────────────── */
+    .quote {
+      font-size: clamp(1.25rem, 2.5vw, 2rem);
+      font-style: italic;
+      line-height: 1.55;
+      color: rgba(240, 237, 230, 0.85);
+      border-left: 3px solid #c9a96e;
+      padding-left: 2rem;
+      max-width: 70ch;
+    }
+
+    /* ─── Scroll hint ───────────────────────────────────────────── */
+    .scroll-hint {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      color: rgba(240, 237, 230, 0.3);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      font-family: 'Arial', sans-serif;
+      animation: bounce 2s ease-in-out infinite;
+    }
+
+    .scroll-hint svg {
+      opacity: 0.4;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%       { transform: translateX(-50%) translateY(6px); }
+    }
+
+    /* ─── Scroll hijack invisible scroller ─────────────────────── */
+    .scroll-capture {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      overflow-y: scroll;
+      scrollbar-width: none;
+      pointer-events: none;
+    }
+
+    .scroll-capture::-webkit-scrollbar { display: none; }
+
+    .scroll-capture__inner {
+      /* One "page" per slide, plus one extra to allow scroll room */
+      height: calc(var(--slide-count, 1) * 100vh);
+    }
+
+    /* ─── Enter animations ──────────────────────────────────────── */
+    .slide__content > * {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 500ms var(--ease), transform 500ms var(--ease);
+    }
+
+    .slide.is-active .slide__content > * {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .slide.is-active .slide__content > *:nth-child(1) { transition-delay: 100ms; }
+    .slide.is-active .slide__content > *:nth-child(2) { transition-delay: 200ms; }
+    .slide.is-active .slide__content > *:nth-child(3) { transition-delay: 300ms; }
+    .slide.is-active .slide__content > *:nth-child(4) { transition-delay: 400ms; }
+    .slide.is-active .slide__content > *:nth-child(5) { transition-delay: 500ms; }
+    .slide.is-active .slide__content > *:nth-child(6) { transition-delay: 600ms; }
+
+    /* split layout: animate both columns */
+    .slide.is-active .slide__content--split > * {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── Responsive ─────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .slide { padding: 4rem 2rem; }
+      .section-label { left: 2rem; }
+      .slide-number { right: 2rem; }
+      .slide__content--split {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+      }
+      .stat-grid { grid-template-columns: 1fr; }
+      .nav-dots { right: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Progress bar -->
+  <div class="progress-bar" id="progressBar"></div>
+
+  <!-- Nav dots -->
+  <nav class="nav-dots" id="navDots" aria-label="Slide navigation"></nav>
+
+  <!-- The actual slides, positioned fixed -->
+  <div class="presentation">
+    <div class="slide-track" id="slideTrack">
+
+      <!-- ══ 0 · COVER ══════════════════════════════════════════ -->
+      <div class="slide slide--cover is-active" data-section="Cover">
+        <img src="templeslide1.jpg" alt="Swayambhu Temple" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.35;" />
+        <div class="slide__content slide__content--center">
+          <span class="overline">Project Presentation</span>
+          <h1>Swayambhu Stories:<br><span class="highlight">Digitally Preserving Swayambhu</span></h1>
+          <div class="divider divider--center"></div>
+          <p class="lead">Recreating a religious site to preserve thousands of years of heritage.</p>
+        </div>
+        <div class="scroll-hint">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          Scroll to begin
+        </div>
+        <div class="slide-number">01 / 08</div>
+      </div>
+
+      <!-- ══ 1 · RECREATING THE SWAYAMBHU TEMPLE ════════════════ -->
+      <div class="slide slide--motivation" data-section="Recreating the Swayambhu Temple">
+        <div class="slide__content slide__content--split">
+          <div>
+            <span class="overline">The Site</span>
+            <h2>Recreating the<br>Swayambhu Temple</h2>
+            <div class="divider"></div>
+            <p>Swayambhu is one of the oldest religious sites in Nepal. It serves as a living monument visited by pilgrims and tourists for over 2,500 years and a UNESCO World Heritage Site.</p>
+            <p style="margin-top: 0.75rem;">Physical deterioration, limited accessibility, and the potential loss of contextual knowledge all threaten its long-term preservation. This project asks: what would it mean to digitally preserve the structure and the intangible aspects of the temple?</p>
+          </div>
+          <div>
+            <img src="templeslide1.jpg" alt="Swayambhu Temple" style="width:100%;border-radius:4px;border:1px solid rgba(240,237,230,0.1);cursor:zoom-in;" />
+          </div>
+        </div>
+        <div class="slide-number">02 / 08</div>
+      </div>
+
+      <!-- ══ 2 · PREVIOUS WORKS ═════════════════════════════════ -->
+      <div class="slide slide--dev-1" data-section="Previous Works">
+        <div class="slide__content slide__content--split">
+          <div>
+            <span class="overline">Prior Works</span>
+            <h2>Previous<br>Works</h2>
+            <div class="divider"></div>
+            <ul class="step-list">
+              <li>
+                <span class="step-num">1</span>
+                <div class="step-text">
+                  <strong>Unity Web Viewer <span style="color:rgba(240,237,230,0.35);font-weight:400;">(no longer available)</span></strong>
+                  <p>Orbit-based browser viewer with video annotations. Suffered from long initial load times and slow annotation video loading, creating significant friction before any content could be explored.</p>
+                </div>
+              </li>
+              <li>
+                <span class="step-num">2</span>
+                <div class="step-text">
+                  <strong>Three.js Website &nbsp;<a href="https://swayambhu-three-js-aaryan2.apps.cloudapps.unc.edu/" target="_blank" rel="noopener" style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;color:#c9a96e;font-family:'Arial',sans-serif;text-decoration:none;border-bottom:1px solid rgba(201,169,110,0.4);">Visit ↗</a></strong>
+                  <p>Strong mobile support made the site broadly accessible. However, model quality and performance were poor, and annotations were never implemented, leaving the model without its intended educational component.</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <img src="oldversion.png" alt="Previous version of the Swayambhu viewer" style="width:100%;border-radius:4px;border:1px solid rgba(240,237,230,0.1);" />
+          </div>
+        </div>
+        <div class="slide-number">03 / 08</div>
+      </div>
+
+      <!-- ══ 3 · CURRENT APPROACH ═══════════════════════════════ -->
+      <div class="slide slide--dev-2" data-section="Current Approach">
+        <div class="slide__content slide__content--challenges">
+          <div class="challenges-left">
+            <span class="overline">Methodology</span>
+            <h2>Current<br>Approach</h2>
+            <div class="divider"></div>
+            <ul class="step-list">
+              <li>
+                <span class="step-num">1</span>
+                <div class="step-text">
+                  <strong>Capture</strong>
+                  <p>20,000 photographs and 100 LiDAR scans, producing a 14GB architectural and local terrain mesh.</p>
+                </div>
+              </li>
+              <li>
+                <span class="step-num">2</span>
+                <div class="step-text">
+                  <strong>Reconstruct</strong>
+                  <p>Imported into Unreal Engine 5.6. Also add Cesium for Unreal to generate 3d terrain for the surrounding area.</p>
+                </div>
+              </li>
+              <li>
+                <span class="step-num">3</span>
+                <div class="step-text">
+                  <strong>Annotate</strong>
+                  <p>Create tour stations built using Unreal Engine Blueprints: info card, video and detail page per point of interest.</p>
+                </div>
+              </li>
+              <li>
+                <span class="step-num">4</span>
+                <div class="step-text">
+                  <strong>Deploy</strong>
+                  <p>Packaged for Meta Quest 3, Windows, and Mac.</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div class="approach-images">
+            <img src="reality capture.png" alt="Reality Capture scan" class="approach-img" />
+            <img src="reality capture 2.png" alt="Reality Capture scan 2" class="approach-img" />
+          </div>
+        </div>
+        <div class="slide-number">04 / 08</div>
+      </div>
+
+      <!-- ══ 4 · CHALLENGES ════════════════════════════════════ -->
+      <div class="slide slide--dev-3" data-section="Challenges">
+        <div class="slide__content slide__content--challenges">
+          <div class="challenges-left">
+            <span class="overline">Obstacles</span>
+            <h2>Challenges</h2>
+            <div class="divider"></div>
+            <ul class="step-list">
+              <li>
+                <span class="step-num">1</span>
+                <div class="step-text">
+                  <strong>Scale of the scan data</strong>
+                  <p>The 20,000 image LiDAR mesh caused texture streaming pool overflow in UE5. We had to create smaller meshes to be compatible with Unreal Engine.</p>
+                </div>
+              </li>
+              <li>
+                <span class="step-num">2</span>
+                <div class="step-text">
+                  <strong>Grounding the reconstruction in its surroundings</strong>
+                  <p>The scanned temple existed in isolation without the Kathmandu Valley terrain that gives Swayambhu its sense of place. Cesium for Unreal was integrated to help create a more immersive experience.</p>
+                </div>
+              </li>
+              <li>
+                <span class="step-num">3</span>
+                <div class="step-text">
+                  <strong>Immersion vs. information overload</strong>
+                  <p>The annotation system had to educate the user without breaking immersion. Info cards never auto-dismiss, and all interactions are keyboard-driven so the cursor never interrupts the view.</p>
+                </div>
+              </li>
+              <li>
+                <span class="step-num">4</span>
+                <div class="step-text">
+                  <strong>Platform constraints</strong>
+                  <p>Creating the project to be accessible as possible was a major consideration. This means creating an application that is lightweight. Meta Quest 3 also enforces strict memory and GPU constraints that affect user experience.</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div class="challenges-logos">
+            <a class="challenge-logo" href="https://www.realityscan.com/" target="_blank" rel="noopener">
+              <img src="realityscan.svg" alt="RealityScan" />
+            </a>
+            <a class="challenge-logo" href="https://cesium.com/platform/cesium-for-unreal/" target="_blank" rel="noopener">
+              <img src="Cesium_for_Unreal_white.svg" alt="Cesium for Unreal" />
+            </a>
+            <a class="challenge-logo" href="https://www.unrealengine.com/" target="_blank" rel="noopener">
+              <img src="Unreal Engine.svg" alt="Unreal Engine" />
+            </a>
+            <a class="challenge-logo" href="https://www.meta.com/quest/" target="_blank" rel="noopener">
+              <img src="meta.svg" alt="Meta" />
+            </a>
+          </div>
+        </div>
+        <div class="slide-number">05 / 08</div>
+      </div>
+
+      <!-- ══ 5 · RESULTS — 1 ════════════════════════════════════ -->
+      <div class="slide slide--results-1" data-section="Results">
+        <div class="slide__content">
+          <span class="overline">Outcomes</span>
+          <h2>Results</h2>
+          <div class="divider"></div>
+          <p>A fully navigable, annotated reconstruction of Swayambhu.</p>
+          <div class="screenshot-grid">
+            <img src="result1.png" alt="Result screenshot 1" class="screenshot-img" />
+            <img src="result2.png" alt="Result screenshot 2" class="screenshot-img" />
+            <img src="result3.png" alt="Result screenshot 3" class="screenshot-img" />
+          </div>
+        </div>
+        <div class="slide-number">06 / 08</div>
+      </div>
+
+      <!-- ══ 5 · RESULTS — 2 ════════════════════════════════════ -->
+      <div class="slide slide--results-2" data-section="Results">
+        <div class="slide__content slide__content--split">
+          <div>
+            <span class="overline">The Experience</span>
+            <h3>Navigating<br>the application</h3>
+            <div class="divider"></div>
+            <p>The player approaches a point of interest. An info card pops up with a title and short description. Pressing <strong style="color:#c9a96e;">E</strong> opens a detail page with video or long-form text. Pressing <strong style="color:#c9a96e;">Q</strong> goes back. Walking away closes everything automatically.</p>
+            <p style="margin-top: 1rem;">The interaction is entirely keyboard-driven, preserving spatial presence throughout. No cursor, only a blur breaking the view.</p>
+          </div>
+          <div>
+            <div class="img-placeholder">
+              <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Demo / screenshot
+            </div>
+          </div>
+        </div>
+        <div class="slide-number">07 / 08</div>
+      </div>
+
+      <!-- ══ 6 · CLOSING ════════════════════════════════════════ -->
+      <div class="slide slide--closing" data-section="Closing">
+        <div class="slide__content slide__content--center">
+          <span class="overline">What's Next</span>
+          <h2>Future directions<br>&amp; <span class="highlight">open questions</span></h2>
+          <div class="divider divider--center"></div>
+          <p class="lead" style="margin: 0 auto;">
+            Replacing placeholder character models with culturally appropriate representations, creating higher definition models, and expanding the annotation library.
+          </p>
+          <p style="margin: 1.5rem auto 0; max-width: 55ch; text-align: center;">
+            What does faithful digital preservation mean for a living religious site, one that continues to change, to be used, and to mean different things to different people?
+          </p>
+        </div>
+        <div class="slide-number">08 / 08</div>
+      </div>
+
+    </div><!-- /slide-track -->
+  </div><!-- /presentation -->
+
+  <!-- Lightbox -->
+  <div id="lightbox" style="
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:200;
+    background:rgba(0,0,0,0.92);
+    align-items:center;
+    justify-content:center;
+    cursor:zoom-out;
+  ">
+    <img id="lightboxImg" src="" alt="" style="
+      max-width:90vw;
+      max-height:90vh;
+      object-fit:contain;
+      border-radius:4px;
+      box-shadow:0 8px 60px rgba(0,0,0,0.6);
+      pointer-events:none;
+    " />
+  </div>
+
+  <!-- Invisible scroll layer that captures wheel/touch input -->
+  <div class="scroll-capture" id="scrollCapture">
+    <div class="scroll-capture__inner"></div>
+  </div>
+
+  <script>
+    (() => {
+      const track      = document.getElementById('slideTrack');
+      const capture    = document.getElementById('scrollCapture');
+      const progressEl = document.getElementById('progressBar');
+      const navEl      = document.getElementById('navDots');
+      const slides     = Array.from(document.querySelectorAll('.slide'));
+      const total      = slides.length;
+
+      // Size the scroll capture so the browser gives us enough scroll room
+      capture.querySelector('.scroll-capture__inner').style.height = (total * 100) + 'vh';
+      document.documentElement.style.setProperty('--slide-count', total);
+
+      let currentIdx  = 0;
+      let isAnimating = false;
+
+      // ─── Build nav dots ───────────────────────────────────────
+      const dots = slides.map((_, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'nav-dot' + (i === 0 ? ' active' : '');
+        btn.setAttribute('aria-label', `Go to slide ${i + 1}`);
+        btn.addEventListener('click', () => goTo(i));
+        navEl.appendChild(btn);
+        return btn;
+      });
+
+      // ─── Core navigation ──────────────────────────────────────
+      function goTo(idx) {
+        if (idx === currentIdx || isAnimating) return;
+        if (idx < 0 || idx >= total) return;
+
+        isAnimating = true;
+
+        // Remove active from old slide before moving
+        slides[currentIdx].classList.remove('is-active');
+        dots[currentIdx].classList.remove('active');
+
+        currentIdx = idx;
+
+        // Slide the track
+        track.style.transform = `translateY(${-idx * 100}vh)`;
+
+        // Update progress bar
+        progressEl.style.width = ((idx / (total - 1)) * 100) + '%';
+
+        // Activate new slide
+        slides[currentIdx].classList.add('is-active');
+        dots[currentIdx].classList.add('active');
+
+        // Sync invisible scroller position quietly
+        capture.scrollTop = idx * window.innerHeight;
+
+        setTimeout(() => { isAnimating = false; }, 700);
+      }
+
+      // ─── Wheel → one slide at a time ─────────────────────────
+      // Replace scroll-position mapping with a debounced wheel handler
+      // so a single scroll gesture never skips more than one slide.
+      let wheelTimer = null;
+      let wheelAccum = 0;
+      const WHEEL_THRESHOLD = 50; // px of accumulated delta before advancing
+
+      document.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        if (isAnimating) return;
+
+        wheelAccum += e.deltaY;
+
+        // Clear any pending timer so we debounce rapid small deltas
+        clearTimeout(wheelTimer);
+        wheelTimer = setTimeout(() => { wheelAccum = 0; }, 200);
+
+        if (Math.abs(wheelAccum) >= WHEEL_THRESHOLD) {
+          goTo(currentIdx + (wheelAccum > 0 ? 1 : -1));
+          wheelAccum = 0;
+          clearTimeout(wheelTimer);
+        }
+      }, { passive: false });
+
+      // ─── Keyboard support ─────────────────────────────────────
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ')  { e.preventDefault(); goTo(currentIdx + 1); }
+        if (e.key === 'ArrowUp'   || e.key === 'ArrowLeft')                    { e.preventDefault(); goTo(currentIdx - 1); }
+        if (e.key === 'Home')                                                  { e.preventDefault(); goTo(0); }
+        if (e.key === 'End')                                                   { e.preventDefault(); goTo(total - 1); }
+      });
+
+      // ─── Touch support ────────────────────────────────────────
+      let touchStartY = 0;
+      document.addEventListener('touchstart', (e) => { touchStartY = e.touches[0].clientY; }, { passive: true });
+      document.addEventListener('touchend', (e) => {
+        const delta = touchStartY - e.changedTouches[0].clientY;
+        if (Math.abs(delta) > 50) goTo(currentIdx + (delta > 0 ? 1 : -1));
+      }, { passive: true });
+
+      // ─── Initial state ────────────────────────────────────────
+      progressEl.style.width = '0%';
+      goTo(0);
+    })();
+  </script>
+
+  <script>
+    // ── Lightbox ──────────────────────────────────────────────────
+    const lightbox    = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+
+    function openLightbox(src, alt) {
+      lightboxImg.src = src;
+      lightboxImg.alt = alt;
+      lightbox.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lightbox.style.display = 'none';
+      lightboxImg.src = '';
+      document.body.style.overflow = '';
+    }
+
+    // Attach to all images except those on the cover slide
+    document.querySelectorAll('.slide:not(.slide--cover) img').forEach(img => {
+      // Skip decorative/logo images (SVGs loaded as img, logos etc.)
+      if (img.closest('.challenges-logos')) return;
+      img.style.cursor = 'zoom-in';
+      img.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openLightbox(img.src, img.alt);
+      });
+    });
+
+    lightbox.addEventListener('click', closeLightbox);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && lightbox.style.display === 'flex') closeLightbox();
+    });
+  </script>
+</body>
+</html>
