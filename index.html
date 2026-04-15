@@ -490,6 +490,67 @@
       .stat-grid { grid-template-columns: 1fr; }
       .nav-dots { right: 1rem; }
     }
+
+    /* ─── Mobile: free scroll mode ──────────────────────────────── */
+    @media (hover: none) and (pointer: coarse) {
+      .presentation {
+        position: relative;
+        inset: auto;
+        overflow: visible;
+        height: auto;
+      }
+
+      .slide-track {
+        transform: none !important;
+        transition: none !important;
+        height: auto;
+      }
+
+      .slide {
+        height: auto;
+        min-height: 100svh;
+        overflow: visible;
+      }
+
+      .scroll-capture {
+        display: none;
+      }
+
+      .nav-dots {
+        display: none;
+      }
+
+      /* all slide content visible without waiting for is-active */
+      .slide .slide__content > * {
+        opacity: 1;
+        transform: none;
+        transition: none;
+      }
+
+      .slide__content--challenges {
+        grid-template-columns: 1fr;
+      }
+
+      .challenges-logos {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 1.25rem;
+        padding: 0;
+      }
+
+      .approach-images {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+
+      .approach-img {
+        max-width: 100%;
+      }
+
+      .screenshot-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -708,16 +769,28 @@
 
       <!-- ══ 6 · CLOSING ════════════════════════════════════════ -->
       <div class="slide slide--closing" data-section="Closing">
-        <div class="slide__content slide__content--center">
-          <span class="overline">What's Next</span>
-          <h2>Future directions<br>&amp; <span class="highlight">open questions</span></h2>
-          <div class="divider divider--center"></div>
-          <p class="lead" style="margin: 0 auto;">
-            Replacing placeholder character models with culturally appropriate representations, creating higher definition models, and expanding the annotation library.
-          </p>
-          <p style="margin: 1.5rem auto 0; max-width: 55ch; text-align: center;">
-            What does faithful digital preservation mean for a living religious site, one that continues to change, to be used, and to mean different things to different people?
-          </p>
+        <div class="slide__content slide__content--split" style="align-items:center;">
+          <div>
+            <span class="overline">What's Next</span>
+            <h2>Future directions<br>&amp; <span class="highlight">open questions</span></h2>
+            <div class="divider"></div>
+            <p>
+              Replacing placeholder character models with culturally appropriate representations, creating higher definition models, and expanding the annotation library.
+            </p>
+            <p style="margin-top: 1rem;">
+              What does faithful digital preservation mean for a living religious site, one that continues to change, to be used, and to mean different things to different people?
+            </p>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:1.5rem;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:0.75rem;">
+              <img src="qrcode.png" alt="QR code" style="width:180px;height:180px;object-fit:contain;border-radius:8px;" />
+              <span style="font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(240,237,230,0.4);font-family:'Arial',sans-serif;">Check out this presentation!</span>
+            </div>
+            <div style="text-align:center;border-top:1px solid rgba(240,237,230,0.1);padding-top:1.25rem;width:100%;">
+              <p style="font-size:0.85rem;color:rgba(240,237,230,0.6);margin-bottom:0.5rem;">Thanks to Dr. Leve &amp; Jim Mahaney</p>
+              <a href="https://fletcherstuart.com" target="_blank" rel="noopener" style="font-size:0.75rem;color:#c9a96e;font-family:'Arial',sans-serif;letter-spacing:0.1em;text-decoration:none;border-bottom:1px solid rgba(201,169,110,0.4);">fletcherstuart.com ↗</a>
+            </div>
+          </div>
         </div>
         <div class="slide-number">08 / 08</div>
       </div>
@@ -806,49 +879,62 @@
         setTimeout(() => { isAnimating = false; }, 700);
       }
 
-      // ─── Wheel → one slide at a time ─────────────────────────
-      // Replace scroll-position mapping with a debounced wheel handler
-      // so a single scroll gesture never skips more than one slide.
-      let wheelTimer = null;
-      let wheelAccum = 0;
-      const WHEEL_THRESHOLD = 50; // px of accumulated delta before advancing
+      // ─── Detect touch device ──────────────────────────────────
+      const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
 
-      document.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        if (isAnimating) return;
+      if (isTouch) {
+        // ── Mobile: free scroll with IntersectionObserver ─────────
+        // Mark all slides visible immediately
+        slides.forEach(s => s.classList.add('is-active'));
+        progressEl.style.width = '0%';
 
-        wheelAccum += e.deltaY;
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const idx = slides.indexOf(entry.target);
+              if (idx !== -1) {
+                dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+                progressEl.style.width = ((idx / (total - 1)) * 100) + '%';
+              }
+            }
+          });
+        }, { threshold: 0.5 });
 
-        // Clear any pending timer so we debounce rapid small deltas
-        clearTimeout(wheelTimer);
-        wheelTimer = setTimeout(() => { wheelAccum = 0; }, 200);
+        slides.forEach(s => observer.observe(s));
 
-        if (Math.abs(wheelAccum) >= WHEEL_THRESHOLD) {
-          goTo(currentIdx + (wheelAccum > 0 ? 1 : -1));
-          wheelAccum = 0;
+      } else {
+        // ── Desktop: wheel-hijack, one slide at a time ────────────
+        let wheelTimer = null;
+        let wheelAccum = 0;
+        const WHEEL_THRESHOLD = 50;
+
+        document.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          if (isAnimating) return;
+
+          wheelAccum += e.deltaY;
           clearTimeout(wheelTimer);
-        }
-      }, { passive: false });
+          wheelTimer = setTimeout(() => { wheelAccum = 0; }, 200);
 
-      // ─── Keyboard support ─────────────────────────────────────
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ')  { e.preventDefault(); goTo(currentIdx + 1); }
-        if (e.key === 'ArrowUp'   || e.key === 'ArrowLeft')                    { e.preventDefault(); goTo(currentIdx - 1); }
-        if (e.key === 'Home')                                                  { e.preventDefault(); goTo(0); }
-        if (e.key === 'End')                                                   { e.preventDefault(); goTo(total - 1); }
-      });
+          if (Math.abs(wheelAccum) >= WHEEL_THRESHOLD) {
+            goTo(currentIdx + (wheelAccum > 0 ? 1 : -1));
+            wheelAccum = 0;
+            clearTimeout(wheelTimer);
+          }
+        }, { passive: false });
 
-      // ─── Touch support ────────────────────────────────────────
-      let touchStartY = 0;
-      document.addEventListener('touchstart', (e) => { touchStartY = e.touches[0].clientY; }, { passive: true });
-      document.addEventListener('touchend', (e) => {
-        const delta = touchStartY - e.changedTouches[0].clientY;
-        if (Math.abs(delta) > 50) goTo(currentIdx + (delta > 0 ? 1 : -1));
-      }, { passive: true });
+        // ── Keyboard support ───────────────────────────────────────
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ')  { e.preventDefault(); goTo(currentIdx + 1); }
+          if (e.key === 'ArrowUp'   || e.key === 'ArrowLeft')                    { e.preventDefault(); goTo(currentIdx - 1); }
+          if (e.key === 'Home')                                                   { e.preventDefault(); goTo(0); }
+          if (e.key === 'End')                                                    { e.preventDefault(); goTo(total - 1); }
+        });
 
-      // ─── Initial state ────────────────────────────────────────
-      progressEl.style.width = '0%';
-      goTo(0);
+        // ─── Initial state ─────────────────────────────────────────
+        progressEl.style.width = '0%';
+        goTo(0);
+      }
     })();
   </script>
 
